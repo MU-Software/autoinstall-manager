@@ -1,0 +1,21 @@
+name: autoinstall-manager
+
+volumes:
+  postgres-data:
+    driver: local
+
+services:
+  autoinstall-manager-postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data:rw
+
+    environment:
+      TZ: Asia/Seoul
+      POSTGRES_USER: ${sqlalchemy__username}
+      POSTGRES_PASSWORD: ${sqlalchemy__password}
+      POSTGRES_DB: ${sqlalchemy__name}
+
+    ports:
+      - ${sqlalchemy__port}:5432
