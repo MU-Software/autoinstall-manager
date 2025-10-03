@@ -18,7 +18,7 @@ def create_app() -> FastAPI:
     async def app_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         app.state.config = config
         yield
-        await config.sqlalchemy.cleanup()
+        await config.sqlalchemy.async_cleanup()
 
     app = FastAPI(
         **config.to_fastapi_config(),

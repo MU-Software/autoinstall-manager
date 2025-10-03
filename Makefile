@@ -30,37 +30,36 @@ LOCAL_AUTOINSTALL_PYDANTIC_MODEL := $(LOCAL_OUTPUT_DIR)$(AUTOINSTALL_PYDANTIC_MO
 AUTOINSTALL_MANAGER_FRONTEND_DIR := $(PROJECT_DIR)frontend/
 AUTOINSTALL_MANAGER_BACKEND_DIR := $(PROJECT_DIR)backend/
 AUTOINSTALL_MANAGER_BACKEND_SRC_DIR := $(AUTOINSTALL_MANAGER_BACKEND_DIR)src/
-AUTOINSTALL_INFRASTRUCTURE_DIR := $(PROJECT_DIR)infrastructures/
-AUTOINSTALL_INFRASTRUCTURE_LOCAL := $(AUTOINSTALL_INFRASTRUCTURE_DIR)docker-compose.dev.yaml
+AUTOINSTALL_MANAGER_INFRA_DIR := $(PROJECT_DIR)infrastructures/
+AUTOINSTALL_MANAGER_INFRA_LOCAL := $(AUTOINSTALL_MANAGER_INFRA_DIR)docker-compose.dev.yaml
 
 DOTENV_DIR := $(PROJECT_DIR)dotenv/
 DOTENV_LOCAL := $(DOTENV_DIR).env.local
 
-# Download UEFI BIOS firmware from here if you don't have it:
-# https://retrage.github.io/edk2-nightly/
-BIOS := $(PROJECT_DIR)DEBUGX64_OVMF.fd
+BIOS := $(LOCAL_INPUT_DIR)DEBUGX64_OVMF.fd
+BIOS_DOWNLOAD_URL := https://raw.githubusercontent.com/retrage/edk2-nightly/refs/heads/master/bin/DEBUGX64_OVMF.fd
 
 # ================= Docker Images ==================
 tool-build-image:
-	docker build -f ./dockerfiles/image-tools.dockerfile --platform linux/amd64 -t image-tools $(PROJECT_DIR)
+	@docker build -f ./dockerfiles/image-tools.dockerfile --platform linux/amd64 -t image-tools $(PROJECT_DIR)
 
 # ================= cloud-init ==================
 cloudinit-validate-subiquity: tool-build-image
-	docker run --rm \
+	@docker run --rm \
 		--platform linux/amd64 \
 		-v $(PROJECT_DIR)/subiquity_autoinstall.yaml:/subiquity_autoinstall.yaml \
 		image-tools /subiquity/scripts/validate-autoinstall-user-data.py /subiquity_autoinstall.yaml -vvv
 
 cloudinit-build-jsonschema: tool-build-image
-	rm -f $(LOCAL_AUTOINSTALL_JSONSCHEMA)
-	docker run --rm \
+	@rm -f $(LOCAL_AUTOINSTALL_JSONSCHEMA)
+	@docker run --rm \
 		--platform linux/amd64 \
 		-v $(LOCAL_OUTPUT_DIR):/output \
 		image-tools cp /subiquity/autoinstall-schema.json $(DOCKER_AUTOINSTALL_JSONSCHEMA)
 
 cloudinit-build-pydantic-model:
-	rm -f $(LOCAL_AUTOINSTALL_PYDANTIC_MODEL)
-	docker run --rm \
+	@rm -f $(LOCAL_AUTOINSTALL_PYDANTIC_MODEL)
+	@docker run --rm \
 		-v $(LOCAL_AUTOINSTALL_JSONSCHEMA):$(DOCKER_AUTOINSTALL_JSONSCHEMA):ro \
 		-v $(LOCAL_OUTPUT_DIR):/output \
 		koxudaxi/datamodel-code-generator \
@@ -76,9 +75,14 @@ cloudinit-build-pydantic-model:
 			--use-unique-items-as-set
 
 # ================= ISO Build ==================
+bios-download:
+	mkdir -p $(LOCAL_INPUT_DIR)
+	if [ ! -f "$(BIOS)" ]; then curl -L -o "$(BIOS)" "$(BIOS_DOWNLOAD_URL)"; \
+	else echo "$(BIOS) already exists, skipping download."; \
+	fi
 
 iso-build: tool-build-image
-	docker run --privileged --rm -it \
+	@docker run --privileged --rm -it \
 		--platform linux/amd64 \
 	    -v $(PROJECT_DIR)/subiquity_autoinstall.yaml:/user-data:ro \
 	    -v $(LOCAL_UBUNTU_ISO):$(DOCKER_UBUNTU_ISO):rw \
@@ -88,26 +92,25 @@ iso-build: tool-build-image
 		image-tools /ubuntu_iso_builder.sh
 
 iso-report-original-el-torito: tool-build-image
-	docker run --privileged --rm -it -v $(LOCAL_UBUNTU_ISO):$(DOCKER_UBUNTU_ISO):ro image-tools xorriso -indev $(DOCKER_UBUNTU_ISO) -report_el_torito
+	@docker run --privileged --rm -it -v $(LOCAL_UBUNTU_ISO):$(DOCKER_UBUNTU_ISO):ro image-tools xorriso -indev $(DOCKER_UBUNTU_ISO) -report_el_torito
 
 iso-report-modified-el-torito: tool-build-image
-	docker run --privileged --rm -it -v $(LOCAL_OUTPUT_ISO):$(DOCKER_OUTPUT_ISO):ro image-tools xorriso -indev $(DOCKER_OUTPUT_ISO) -report_el_torito
+	@docker run --privileged --rm -it -v $(LOCAL_OUTPUT_ISO):$(DOCKER_OUTPUT_ISO):ro image-tools xorriso -indev $(DOCKER_OUTPUT_ISO) -report_el_torito
 
-iso-boot-original:
-	qemu-system-x86_64 \
+iso-boot-original: bios-download
+	@qemu-system-x86_64 \
 		-device ich9-ahci,id=sata \
 		-drive id=cdrom,if=none,format=raw,media=cdrom,file="$(LOCAL_UBUNTU_ISO)" \
 		-device ide-cd,bus=sata.2,drive=cdrom \
 		-bios $(BIOS) -boot order=d -serial stdio
 
-iso-boot-modified:
-	qemu-system-x86_64 \
+iso-boot-modified: bios-download
+	@qemu-system-x86_64 \
 		-debugcon file:ovmf.log -global isa-debugcon.iobase=0x402 \
 		-device ich9-ahci,id=sata \
 		-drive id=cdrom,if=none,format=raw,media=cdrom,file="$(LOCAL_OUTPUT_ISO)" \
 		-device ide-cd,bus=sata.2,drive=cdrom \
 		-bios $(BIOS) -boot order=d -serial stdio
-
 
 # ================= Autoinstall manager backend ==================
 MIGRATION_MESSAGE ?= `date +"%Y%m%d_%H%M%S"`
@@ -121,37 +124,56 @@ endif
 MIGRATION_MESSAGE := $(if $(MIGRATION_MESSAGE),$(MIGRATION_MESSAGE),migration)
 
 local-infra-up:
-	docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_INFRASTRUCTURE_LOCAL) up -d
+	@docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_MANAGER_INFRA_LOCAL) up -d
 
 local-infra-down:
-	docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_INFRASTRUCTURE_LOCAL) down
+	@docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_MANAGER_INFRA_LOCAL) down
 
 local-infra-rm: local-infra-down
-	docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_INFRASTRUCTURE_LOCAL) rm
+	@docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_MANAGER_INFRA_LOCAL) rm
 
 local-backend-db-makemigration: local-infra-up
-	ENV_FILE=$(DOTENV_LOCAL) uv run alembic revision --autogenerate -m $(MIGRATION_MESSAGE)
+	@ENV_FILE=$(DOTENV_LOCAL) uv run alembic revision --autogenerate -m $(MIGRATION_MESSAGE)
 
 local-backend-db-upgrade: local-infra-up
-	ENV_FILE=$(DOTENV_LOCAL) uv run alembic upgrade $(UPGRADE_VERSION)
+	@ENV_FILE=$(DOTENV_LOCAL) uv run alembic upgrade $(UPGRADE_VERSION)
 
 local-backend-db-downgrade: local-infra-up
-	ENV_FILE=$(DOTENV_LOCAL) uv run alembic downgrade $(DOWNGRADE_VERSION)
+	@ENV_FILE=$(DOTENV_LOCAL) uv run alembic downgrade $(DOWNGRADE_VERSION)
 
 local-backend-hook-install:
-	uv run pre-commit install
+	@uv run pre-commit install
 
 local-backend-hook-upgrade:
-	uv run pre-commit run autoupdate
+	@uv run pre-commit run autoupdate
 
 local-backend-lint:
-	uv run pre-commit run
+	@uv run pre-commit run --all-files
 
 local-backend-mypy:
-	uv run pre-commit run mypy
+	@uv run pre-commit run mypy --all-files
 
 local-backend-run:
-	ENV_FILE=$(DOTENV_LOCAL) uv run python -m backend
+	@ENV_FILE=$(DOTENV_LOCAL) uv run python -m backend
+
+local-backend-cli:
+	@ENV_FILE=$(DOTENV_LOCAL) uv run python -m backend.cli --help
+
+# Usage: make local-backend-cli-<command> [-- <args...>]
+# Example: make local-backend-cli-db-reset -- --create-tables
+local-backend-cli-%:
+	@if [[ -z "$*" || "$*" == '.o' ]]; then echo "Usage: make local-backend-cli-<command> [-- <args...>]"; exit 1; fi
+	@ENV_FILE=$(DOTENV_LOCAL) uv run python -m backend.cli $* $(filter-out $@ --,$(MAKECMDGOALS))
+
+# ================= Autoinstall manager frontend ==================
+local-frontend-install:
+	@pnpm install
 
 local-frontend-run:
-	pnpm run dev
+	@pnpm run dev
+
+local-frontend-build:
+	@pnpm run build
+
+local-frontend-lint:
+	@pnpm run lint

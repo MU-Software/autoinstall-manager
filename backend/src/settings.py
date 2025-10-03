@@ -8,8 +8,11 @@ from fastapi.openapi.models import Contact, License
 from packaging.version import InvalidVersion, Version
 from pydantic import HttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine.base import Engine
+from sqlalchemy.engine.create import create_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine, async_engine_from_config
 from sqlalchemy.ext.asyncio.session import AsyncSession, async_sessionmaker
+from sqlalchemy.orm.session import Session, sessionmaker
 from toml import load as toml_load
 from uvicorn.config import Config
 
@@ -54,22 +57,40 @@ class SQLAlchemySetting(BaseSettings):
         )
 
     @cached_property
-    def engine(self) -> AsyncEngine:
+    def sync_engine(self) -> Engine:
+        config = self.model_dump(include=self.ENGINE_CONFIG_FIELDS) | {"url": self.url}
+        return create_engine(**config)
+
+    @cached_property
+    def sync_session_maker(self) -> sessionmaker[Session]:
+        config = self.model_dump(include=self.SESSION_MAKER_CONFIG_FIELDS)
+        return sessionmaker(**config, bind=self.sync_engine)
+
+    @cached_property
+    def async_engine(self) -> AsyncEngine:
         config = self.model_dump(include=self.ENGINE_CONFIG_FIELDS) | {"url": self.url}
         return async_engine_from_config(prefix="", configuration=config)
 
     @cached_property
-    def session_maker(self) -> async_sessionmaker[AsyncSession]:
+    def async_session_maker(self) -> async_sessionmaker[AsyncSession]:
         config = self.model_dump(include=self.SESSION_MAKER_CONFIG_FIELDS)
-        return async_sessionmaker(**config, bind=self.engine, class_=AsyncSession)
+        return async_sessionmaker(**config, bind=self.async_engine, class_=AsyncSession)
 
-    async def cleanup(self) -> None:
-        del self.session_maker
+    def sync_cleanup(self) -> None:
+        if hasattr(self, "sync_session_maker"):
+            del self.sync_session_maker
 
-        if self.engine:
-            await self.engine.dispose()
+            if hasattr(self, "sync_engine"):
+                self.sync_engine.dispose()
+                del self.sync_engine
 
-        del self.engine
+    async def async_cleanup(self) -> None:
+        if hasattr(self, "async_session_maker"):
+            del self.async_session_maker
+
+            if hasattr(self, "async_engine"):
+                await self.async_engine.dispose()
+                del self.async_engine
 
 
 class ProjectInfoSetting(BaseSettings):
@@ -124,6 +145,8 @@ class ProjectSetting(BaseSettings):
 
     openapi: OpenAPISetting = OpenAPISetting()
     project_info: ProjectInfoSetting = ProjectInfoSetting.from_pyproject()
+
+    model_config = SettingsConfigDict(extra="ignore")
 
     @classmethod
     def from_dotenv(cls, env_file: str = ".env") -> ProjectSetting:

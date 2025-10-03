@@ -42,7 +42,7 @@ def upgrade() -> None:
         Column("updated_at", DateTime(), server_default=TextClause("now()"), server_onupdate=TextClause("now()"), nullable=False),
         Column("name", AutoString(), nullable=False),
         Column("identifier", AutoString(), nullable=False),
-        Column("config_node_id", Uuid(), nullable=True),
+        Column("config_node_id", Uuid(), nullable=False),
         ForeignKeyConstraint(["config_node_id"], ["confignode.id"], name=f("fk_device_config_node_id_confignode")),
         PrimaryKeyConstraint("id", name=f("pk_device")),
     )

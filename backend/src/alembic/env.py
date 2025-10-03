@@ -29,7 +29,7 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    connectable = project_settings.sqlalchemy.engine
+    connectable = project_settings.sqlalchemy.async_engine
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

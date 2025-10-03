@@ -16,7 +16,7 @@ configDI = Annotated[ProjectSetting, Depends(config_di)]
 
 
 async def db_session_di(config: configDI) -> AsyncGenerator[AsyncSession, None]:
-    async with config.sqlalchemy.session_maker() as session:
+    async with config.sqlalchemy.async_session_maker() as session:
         try:
             yield session
             await session.commit()
