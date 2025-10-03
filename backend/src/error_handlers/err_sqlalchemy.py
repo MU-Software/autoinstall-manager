@@ -37,7 +37,7 @@ from psycopg.errors import (
     UniqueViolation,
 )
 from sqlalchemy.exc import SQLAlchemyError
-from src.errors import DBServerError, DBValueError, ErrorEnum
+from src.consts.errors import DBServerError, DBValueError, ErrorEnum
 from src.models import NAMING_CONVENTION_DICT, NCKeyType
 from starlette.requests import Request
 from starlette.responses import JSONResponse

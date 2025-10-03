@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from json import JSONDecodeError
 
-from src.errors import ClientError, ErrorStruct, ServerError
+from src.consts.errors import ClientError, ErrorStruct, ServerError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 

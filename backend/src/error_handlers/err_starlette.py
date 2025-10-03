@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Response
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException as FastAPIHTTPException
-from src.errors import ErrorStruct
+from src.consts.errors import ErrorStruct
 from src.utils.strlib import camel_to_snake_case
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import Request
