@@ -6,6 +6,7 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 export default defineConfig({
   base: '/',
   root: 'frontend',
+  envDir: '../dotenv',
   plugins: [react(), viteSingleFile()],
   resolve: {
     alias: {
@@ -17,6 +18,16 @@ export default defineConfig({
       '@frontend/pages': path.resolve(__dirname, './src/components/pages'),
       '@frontend/schemas': path.resolve(__dirname, './src/schemas'),
       '@frontend/utils': path.resolve(__dirname, './src/utils'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:58000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
 })

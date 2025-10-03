@@ -25,7 +25,7 @@ import { ErrorBoundary, Suspense } from '@suspensive/react'
 import AjvDraft04 from 'ajv-draft-04'
 import type { JSONSchema7 } from 'json-schema'
 import React from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import * as R from 'remeda'
 
 import { retrieve } from '@frontend/apis/api'
@@ -33,6 +33,7 @@ import { ErrorFallback } from '@frontend/elements/error_handler'
 import { useAPIClient, useCreateMutation, useRemoveMutation, useSchemaQuery, useUpdateMutation } from '@frontend/hooks/useAPI'
 import { filterReadOnlyPropertiesInJsonSchema, filterWritablePropertiesInJsonSchema } from '@frontend/utils/json_schema'
 import { addErrorSnackbar, addSnackbar } from '@frontend/utils/snackbar'
+import { isNumeric } from '@frontend/utils/string'
 
 type EditorFormDataEventType = IChangeEvent<Record<string, string>, RJSFSchema, { [k in string]: unknown }>
 type onSubmitType = (data: Record<string, string>, event: React.FormEvent<unknown>) => void
@@ -260,9 +261,14 @@ export const Editor: React.FC<AppResourceIdType & EditorPropsType> = ErrorBounda
 
 export const EditorRoutePage: React.FC<EditorPropsType> = Suspense.with({ fallback: <CircularProgress /> }, async (props) => {
   const { id } = useParams<{ id?: string }>()
-  if (!id) return <Editor {...props} />
+  if (id === 'create') return <Editor {...props} />
 
   const { resource } = props
+  if (!isNumeric(id)) {
+    alert('유효하지 않은 ID입니다.')
+    return <Navigate to={`/${resource}`} replace />
+  }
+
   const apiClient = useAPIClient()
   props.initialData = { ...(await retrieve<Record<string, string>>(apiClient, resource, id)()), ...props.initialData }
   return <Editor {...props} id={id} />

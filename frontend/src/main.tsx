@@ -6,6 +6,8 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 
+import type { ContextOptions } from '@frontend/contexts'
+import { AppContextProvider } from '@frontend/elements/app_context'
 import { ErrorPage } from '@frontend/pages/commons/error_page'
 import { router } from './router'
 
@@ -20,15 +22,23 @@ const queryClient = new QueryClient({
   },
 })
 
+const appContextOptions: ContextOptions = {
+  debug: import.meta.env.MODE === 'development',
+  apiDomain: import.meta.env.VITE_API_DOMAIN || '',
+  apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 10000,
+}
+
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SnackbarProvider>
-      <QueryClientProvider client={queryClient}>
-        <ReactQueryDevtools initialIsOpen={false} />
-        <ErrorBoundary fallback={ErrorPage}>
-          <RouterProvider router={router} />
-        </ErrorBoundary>
-      </QueryClientProvider>
+      <AppContextProvider options={appContextOptions}>
+        <QueryClientProvider client={queryClient}>
+          <ReactQueryDevtools initialIsOpen={false} />
+          <ErrorBoundary fallback={ErrorPage}>
+            <RouterProvider router={router} />
+          </ErrorBoundary>
+        </QueryClientProvider>
+      </AppContextProvider>
     </SnackbarProvider>
   </React.StrictMode>
 )

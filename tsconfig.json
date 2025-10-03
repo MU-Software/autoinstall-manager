@@ -30,5 +30,5 @@
       "@frontend/*": ["frontend/src/components/*"]
     }
   },
-  "include": ["frontend/src", "frontend/vite.config.ts"]
+  "include": ["frontend/src", "frontend/vite.config.ts", "frontend/vite-env.d.ts"]
 }
