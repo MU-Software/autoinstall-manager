@@ -6,7 +6,7 @@ from typing import ClassVar, cast
 
 from fastapi.openapi.models import Contact, License
 from packaging.version import InvalidVersion, Version
-from pydantic import DirectoryPath, HttpUrl, PostgresDsn, field_validator
+from pydantic import HttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.ext.asyncio.engine import AsyncEngine, async_engine_from_config
 from sqlalchemy.ext.asyncio.session import AsyncSession, async_sessionmaker
@@ -18,7 +18,6 @@ class ServerSetting(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8000
     debug: bool = False
-    root_path: DirectoryPath
 
 
 class SQLAlchemySetting(BaseSettings):
@@ -142,7 +141,7 @@ class ProjectSetting(BaseSettings):
         # See fastapi.FastAPI.__init__ keyword arguments for more details
         project_config: dict = self.project_info.model_dump()
         openapi_config: dict = (self.openapi if self.server.debug else OpenAPISetting.blank()).model_dump()
-        server_config: dict = self.server.model_dump(mode="json", include={"root_path", "debug"})
+        server_config: dict = self.server.model_dump(mode="json", include={"debug"})
 
         return project_config | openapi_config | server_config
 
