@@ -1,12 +1,13 @@
 from collections.abc import Sequence
 from typing import ClassVar, Generic, NotRequired, TypeAlias, TypedDict, TypeVar, Unpack
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.sql.elements import UnaryExpression
 from sqlalchemy.sql.expression import ColumnElement, desc, func, select, true
+from src.consts.errors import ClientError, ServerError
 from src.dependencies import dbDI
-from src.errors import ClientError, ServerError
 from src.models import DefaultModelMixin
 
 M = TypeVar("M", bound=DefaultModelMixin)
@@ -45,7 +46,7 @@ class RepositoryImpl(BaseModel, Generic[M]):
         except MultipleResultsFound:
             ServerError.MULTIPLE_RESOURCES_FOUND.raise_()
 
-    async def retrieve_by_id(self, id: int | str) -> M:
+    async def retrieve_by_id(self, id: UUID | str) -> M:
         return await self.retrieve_by_query(self.model.id == id)  # type: ignore[arg-type]
 
     async def list(self, **kwargs: Unpack[ListKwargsType]) -> Sequence[M]:
@@ -65,3 +66,4 @@ class RepositoryImpl(BaseModel, Generic[M]):
     async def delete(self, obj: M) -> None:
         await self.session.delete(obj)
         await self.session.commit()
+        return None
