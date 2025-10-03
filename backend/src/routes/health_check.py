@@ -5,11 +5,12 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.sql import text
+from src.consts.tags import OpenAPITag
 from src.dependencies import configDI, dbDI
 
 logger = getLogger(__name__)
 
-health_check_router = APIRouter(prefix="/health")
+health_check_router = APIRouter(prefix="/health", tags=[OpenAPITag.HEALTH_CHECK])
 
 
 class EmptyResponseSchema(BaseModel):
