@@ -27,8 +27,9 @@ LOCAL_OUTPUT_ISO := $(LOCAL_OUTPUT_DIR)$(OUTPUT_ISO_NAME)
 LOCAL_AUTOINSTALL_JSONSCHEMA := $(LOCAL_OUTPUT_DIR)$(AUTOINSTALL_JSONSCHEMA)
 LOCAL_AUTOINSTALL_PYDANTIC_MODEL := $(LOCAL_OUTPUT_DIR)$(AUTOINSTALL_PYDANTIC_MODEL)
 
-AUTOINSTALL_MANAGER_SERVER_DIR := $(PROJECT_DIR)backend/
-AUTOINSTALL_MANAGER_SERVER_SRC_DIR := $(AUTOINSTALL_MANAGER_SERVER_DIR)src/
+AUTOINSTALL_MANAGER_FRONTEND_DIR := $(PROJECT_DIR)frontend/
+AUTOINSTALL_MANAGER_BACKEND_DIR := $(PROJECT_DIR)backend/
+AUTOINSTALL_MANAGER_BACKEND_SRC_DIR := $(AUTOINSTALL_MANAGER_BACKEND_DIR)src/
 AUTOINSTALL_INFRASTRUCTURE_DIR := $(PROJECT_DIR)infrastructures/
 AUTOINSTALL_INFRASTRUCTURE_LOCAL := $(AUTOINSTALL_INFRASTRUCTURE_DIR)docker-compose.dev.yaml
 
@@ -108,7 +109,7 @@ iso-boot-modified:
 		-bios $(BIOS) -boot order=d -serial stdio
 
 
-# ================= Autoinstall manager Server ==================
+# ================= Autoinstall manager backend ==================
 MIGRATION_MESSAGE ?= `date +"%Y%m%d_%H%M%S"`
 UPGRADE_VERSION ?= head
 DOWNGRADE_VERSION ?= -1
@@ -119,39 +120,38 @@ ifeq (makemigration,$(firstword $(MAKECMDGOALS)))
 endif
 MIGRATION_MESSAGE := $(if $(MIGRATION_MESSAGE),$(MIGRATION_MESSAGE),migration)
 
-autoinstall-manager-local-infra-up:
+local-infra-up:
 	docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_INFRASTRUCTURE_LOCAL) up -d
 
-autoinstall-manager-local-infra-down:
+local-infra-down:
 	docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_INFRASTRUCTURE_LOCAL) down
 
-autoinstall-manager-local-infra-rm: autoinstall-manager-local-infra-down
+local-infra-rm: local-infra-down
 	docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_INFRASTRUCTURE_LOCAL) rm
 
-autoinstall-manager-local-server-db-makemigration: autoinstall-manager-local-infra-up
+local-backend-db-makemigration: local-infra-up
 	ENV_FILE=$(DOTENV_LOCAL) uv run alembic revision --autogenerate -m $(MIGRATION_MESSAGE)
 
-autoinstall-manager-local-server-db-upgrade: autoinstall-manager-local-infra-up
+local-backend-db-upgrade: local-infra-up
 	ENV_FILE=$(DOTENV_LOCAL) uv run alembic upgrade $(UPGRADE_VERSION)
 
-autoinstall-manager-local-server-db-downgrade: autoinstall-manager-local-infra-up
+local-backend-db-downgrade: local-infra-up
 	ENV_FILE=$(DOTENV_LOCAL) uv run alembic downgrade $(DOWNGRADE_VERSION)
 
-autoinstall-manager-local-server-run:
-	ENV_FILE=$(DOTENV_LOCAL) uv run python -m server
-
-autoinstall-manager-local-server-lint-install:
+local-backend-hook-install:
 	uv run pre-commit install
 
-autoinstall-manager-local-server-lint-upgrade:
+local-backend-hook-upgrade:
 	uv run pre-commit run autoupdate
 
-autoinstall-manager-local-server-lint:
+local-backend-lint:
 	uv run pre-commit run
 
-autoinstall-manager-local-server-mypy:
+local-backend-mypy:
 	uv run pre-commit run mypy
 
-server-lint: autoinstall-manager-local-server-lint
+local-backend-run:
+	ENV_FILE=$(DOTENV_LOCAL) uv run python -m backend
 
-server-mypy: autoinstall-manager-local-server-mypy
+local-frontend-run:
+	pnpm run dev
