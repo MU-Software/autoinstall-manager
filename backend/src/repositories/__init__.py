@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from typing import ClassVar, Generic, NotRequired, TypeAlias, TypedDict, TypeVar, Unpack
 from uuid import UUID
@@ -22,6 +24,15 @@ class ListKwargsType(TypedDict, total=False):
     order_by: NotRequired[OrderByType]
     offset: NotRequired[int]
     limit: NotRequired[int]
+
+
+class EnumValue(BaseModel):
+    const: UUID
+    title: str
+
+    @classmethod
+    def from_tuple(cls, tpl: tuple[UUID, str]) -> EnumValue:
+        return cls(const=tpl[0], title=tpl[1])
 
 
 class RepositoryImpl(BaseModel, Generic[M]):
@@ -68,3 +79,6 @@ class RepositoryImpl(BaseModel, Generic[M]):
         await self.session.delete(obj)
         await self.session.commit()
         return None
+
+    async def list_enum_values(self) -> Sequence[EnumValue]:
+        raise NotImplementedError("subclasses must implement list_enum_values")
