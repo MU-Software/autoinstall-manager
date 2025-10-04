@@ -5,7 +5,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.sql.elements import UnaryExpression
-from sqlalchemy.sql.expression import ColumnElement, desc, func, select, true
+from sqlalchemy.sql.expression import ColumnElement, func, select, true
+from sqlmodel.sql.expression import col, desc
 from src.consts.errors import ClientError, ServerError
 from src.dependencies import dbDI
 from src.models import DefaultModelMixin
@@ -31,7 +32,7 @@ class RepositoryImpl(BaseModel, Generic[M]):
 
     @property
     def order_by(self) -> OrderByType:
-        return [desc(self.model.updated_at)]  # type: ignore[arg-type]
+        return [desc(self.model.updated_at)]
 
     async def count(self, filter: QueryType | None = None) -> int:
         query = select(func.count()).select_from(self.model).where(filter or true())
@@ -47,7 +48,7 @@ class RepositoryImpl(BaseModel, Generic[M]):
             ServerError.MULTIPLE_RESOURCES_FOUND.raise_()
 
     async def retrieve_by_id(self, id: UUID | str) -> M:
-        return await self.retrieve_by_query(self.model.id == id)  # type: ignore[arg-type]
+        return await self.retrieve_by_query(col(self.model.id) == id)
 
     async def list(self, **kwargs: Unpack[ListKwargsType]) -> Sequence[M]:
         filter: QueryType = kwargs.get("filter", true())

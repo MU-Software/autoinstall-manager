@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator, Generator
 from typing import Annotated, cast
 
 from fastapi import Depends, FastAPI, Request
-from sqlalchemy.ext.asyncio.session import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession as SQLModelAsyncSession
 from src.settings import ProjectSetting
 
 
@@ -15,7 +15,7 @@ def config_di(
 configDI = Annotated[ProjectSetting, Depends(config_di)]
 
 
-async def db_session_di(config: configDI) -> AsyncGenerator[AsyncSession, None]:
+async def db_session_di(config: configDI) -> AsyncGenerator[SQLModelAsyncSession, None]:
     async with config.sqlalchemy.async_session_maker() as session:
         try:
             yield session
@@ -27,4 +27,4 @@ async def db_session_di(config: configDI) -> AsyncGenerator[AsyncSession, None]:
             await session.aclose()
 
 
-dbDI = Annotated[AsyncSession, Depends(db_session_di)]
+dbDI = Annotated[SQLModelAsyncSession, Depends(db_session_di)]

@@ -11,8 +11,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.engine.create import create_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine, async_engine_from_config
-from sqlalchemy.ext.asyncio.session import AsyncSession, async_sessionmaker
-from sqlalchemy.orm.session import Session, sessionmaker
+from sqlalchemy.ext.asyncio.session import async_sessionmaker
+from sqlalchemy.orm.session import sessionmaker
+from sqlmodel.ext.asyncio.session import AsyncSession as SQLModelAsyncSession
+from sqlmodel.orm.session import Session as SQLModelSession
 from toml import load as toml_load
 from uvicorn.config import Config
 
@@ -62,7 +64,7 @@ class SQLAlchemySetting(BaseSettings):
         return create_engine(**config)
 
     @cached_property
-    def sync_session_maker(self) -> sessionmaker[Session]:
+    def sync_session_maker(self) -> sessionmaker[SQLModelSession]:
         config = self.model_dump(include=self.SESSION_MAKER_CONFIG_FIELDS)
         return sessionmaker(**config, bind=self.sync_engine)
 
@@ -72,9 +74,9 @@ class SQLAlchemySetting(BaseSettings):
         return async_engine_from_config(prefix="", configuration=config)
 
     @cached_property
-    def async_session_maker(self) -> async_sessionmaker[AsyncSession]:
+    def async_session_maker(self) -> async_sessionmaker[SQLModelAsyncSession]:
         config = self.model_dump(include=self.SESSION_MAKER_CONFIG_FIELDS)
-        return async_sessionmaker(**config, bind=self.async_engine, class_=AsyncSession)
+        return async_sessionmaker(**config, bind=self.async_engine, class_=SQLModelAsyncSession)
 
     def sync_cleanup(self) -> None:
         if hasattr(self, "sync_session_maker"):
