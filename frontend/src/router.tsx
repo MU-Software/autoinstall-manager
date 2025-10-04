@@ -10,20 +10,20 @@ export const router = createBrowserRouter([
     Component: MainLayout,
     children: [
       {
-        path: '/config-nodes',
-        element: <ListPage resource="config-nodes" />,
+        path: '/confignode',
+        element: <ListPage resource="confignode" />,
       },
       {
-        path: '/config-nodes/:id',
-        element: <EditorRoutePage resource="config-nodes" />,
+        path: '/confignode/:id',
+        element: <EditorRoutePage resource="confignode" />,
       },
       {
-        path: '/devices',
-        element: <ListPage resource="devices" />,
+        path: '/device',
+        element: <ListPage resource="device" />,
       },
       {
-        path: '/devices/:id',
-        element: <EditorRoutePage resource="devices" />,
+        path: '/device/:id',
+        element: <EditorRoutePage resource="device" />,
       },
     ],
   },
