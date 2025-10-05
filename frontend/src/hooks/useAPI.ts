@@ -50,28 +50,62 @@ export const useCreateMutation = <T>(client: APIClient, resource: string) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.CREATE, resource],
     mutationFn: create<T>(client, resource),
+    meta: {
+      invalidates: [
+        [...QUERY_KEYS.LIST, resource],
+        [...QUERY_KEYS.LIST_SELECTABLE_ENUMS, resource],
+      ],
+    },
   })
 
 export const useUpdateMutation = <T>(client: APIClient, resource: string) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.UPDATE, resource],
     mutationFn: update<T>(client, resource),
+    meta: {
+      invalidates: [
+        [...QUERY_KEYS.LIST, resource],
+        [...QUERY_KEYS.LIST_SELECTABLE_ENUMS, resource],
+        [...QUERY_KEYS.RETRIEVE, resource],
+      ],
+    },
   })
 
 export const useUpdatePreparedMutation = <T>(client: APIClient, resource: string) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.UPDATE, resource, 'prepared'],
     mutationFn: updatePrepared<T>(client, resource),
+    meta: {
+      invalidates: [
+        [...QUERY_KEYS.LIST, resource],
+        [...QUERY_KEYS.LIST_SELECTABLE_ENUMS, resource],
+        [...QUERY_KEYS.RETRIEVE, resource],
+      ],
+    },
   })
 
 export const useRemoveMutation = (client: APIClient, resource: string, id: string) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.REMOVE, resource, id],
     mutationFn: remove(client, resource, id),
+    meta: {
+      invalidates: [
+        [...QUERY_KEYS.LIST, resource],
+        [...QUERY_KEYS.LIST_SELECTABLE_ENUMS, resource],
+        [...QUERY_KEYS.RETRIEVE, resource],
+      ],
+    },
   })
 
 export const useRemovePreparedMutation = (client: APIClient, resource: string) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.REMOVE, resource, 'prepared'],
     mutationFn: removePrepared(client, resource),
+    meta: {
+      invalidates: [
+        [...QUERY_KEYS.LIST, resource],
+        [...QUERY_KEYS.LIST_SELECTABLE_ENUMS, resource],
+        [...QUERY_KEYS.RETRIEVE, resource],
+      ],
+    },
   })

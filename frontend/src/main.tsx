@@ -1,5 +1,5 @@
 import { ErrorBoundary } from '@suspensive/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { matchQuery, MutationCache, Query, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { SnackbarProvider } from 'notistack'
 import React from 'react'
@@ -20,6 +20,12 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
+  mutationCache: new MutationCache({
+    onSuccess: (_data, _var, _ctx, mut) => {
+      const predicate = (q: Query) => mut.meta?.invalidates?.some((queryKey) => matchQuery({ queryKey }, q)) ?? true
+      queryClient.resetQueries({ predicate })
+    },
+  }),
 })
 
 const appContextOptions: ContextOptions = {
