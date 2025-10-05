@@ -2,9 +2,9 @@ from datetime import datetime
 from re import Pattern, compile
 from secrets import token_hex
 from typing import Annotated, Literal, NamedTuple, Unpack
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-from pydantic import UUID4, ConfigDict
+from pydantic import ConfigDict
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import MetaData
@@ -42,7 +42,7 @@ default_model_mixin_metadata = MetaData(naming_convention={k: v.name for k, v in
 
 class DefaultModelMixin(SQLModel, table=False):
     id: Annotated[
-        UUID4,
+        UUID,
         Field(
             primary_key=True,
             index=True,
@@ -76,7 +76,7 @@ class DefaultModelMixin(SQLModel, table=False):
     # - https://github.com/fastapi/sqlmodel/discussions/925
     # - https://github.com/fastapi/sqlmodel/pull/1041
     # This causes issues when using with FastAPI, especially for request body validation.
-    # ex) id field is UUID4, but result object (from FastAPI Depends) has id as str.
+    # ex) id field is UUID, but result object (from FastAPI Depends) has id as str.
     # So we enable validate_assignment here.
     # And also, We cannot import SQLModelConfig from sqlmodel as it is not exposed, so we use Pydantic's ConfigDict.
     model_config = ConfigDict(validate_assignment=True)  # type: ignore[assignment]
@@ -93,7 +93,7 @@ class DefaultModelMixin(SQLModel, table=False):
 
 class ConfigNode(DefaultModelMixin, table=True):
     name: Annotated[str, Field(nullable=False, index=True, unique=True)]
-    parent_id: Annotated[UUID4 | None, Field(foreign_key="confignode.id", nullable=True, default=None)]
+    parent_id: Annotated[UUID | None, Field(foreign_key="confignode.id", nullable=True, default=None)]
 
     autoinstall_config: Annotated[str, Field(nullable=False)]  # JSON serialized value
 
@@ -110,4 +110,4 @@ class Device(DefaultModelMixin, table=True):
         ),
     ]
 
-    config_node_id: Annotated[UUID4, Field(foreign_key="confignode.id", nullable=False)]
+    config_node_id: Annotated[UUID, Field(foreign_key="confignode.id", nullable=False)]
