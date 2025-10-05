@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import ClassVar, Generic, NotRequired, TypeAlias, TypedDict, TypeVar, Unpack
+from typing import ClassVar, Generic, TypeAlias, TypedDict, TypeVar, Unpack
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -12,27 +12,20 @@ from sqlmodel.sql.expression import col, desc
 from src.consts.errors import ClientError, ServerError
 from src.dependencies import dbDI
 from src.models import DefaultModelMixin
+from src.schemas.enum_value import EnumValue
 
 M = TypeVar("M", bound=DefaultModelMixin)
 
 QueryType: TypeAlias = ColumnElement[bool]
-OrderByType: TypeAlias = list[ColumnElement | UnaryExpression | str]
+OrderExpr: TypeAlias = ColumnElement | UnaryExpression
+OrderByType: TypeAlias = list[OrderExpr]
 
 
 class ListKwargsType(TypedDict, total=False):
-    filter: NotRequired[QueryType]
-    order_by: NotRequired[OrderByType]
-    offset: NotRequired[int]
-    limit: NotRequired[int]
-
-
-class EnumValue(BaseModel):
-    const: UUID
-    title: str
-
-    @classmethod
-    def from_tuple(cls, tpl: tuple[UUID, str]) -> EnumValue:
-        return cls(const=tpl[0], title=tpl[1])
+    filter: QueryType
+    order_by: OrderByType
+    offset: int
+    limit: int
 
 
 class RepositoryImpl(BaseModel, Generic[M]):
@@ -58,7 +51,7 @@ class RepositoryImpl(BaseModel, Generic[M]):
         except MultipleResultsFound:
             ServerError.MULTIPLE_RESOURCES_FOUND.raise_()
 
-    async def retrieve_by_id(self, id: UUID | str) -> M:
+    async def retrieve_by_id(self, id: UUID) -> M:
         return await self.retrieve_by_query(col(self.model.id) == id)
 
     async def list(self, **kwargs: Unpack[ListKwargsType]) -> Sequence[M]:
@@ -73,12 +66,13 @@ class RepositoryImpl(BaseModel, Generic[M]):
     async def create(self, obj: M) -> M:
         self.session.add(obj)
         await self.session.commit()
+        await self.session.flush()
+        await self.session.refresh(obj)
         return obj
 
     async def delete(self, obj: M) -> None:
         await self.session.delete(obj)
         await self.session.commit()
-        return None
 
     async def list_enum_values(self) -> Sequence[EnumValue]:
         raise NotImplementedError("subclasses must implement list_enum_values")
