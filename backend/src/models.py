@@ -2,9 +2,9 @@ from datetime import datetime
 from re import Pattern, compile
 from secrets import token_hex
 from typing import Annotated, Literal, NamedTuple, Unpack
-from uuid import UUID, uuid4
+from uuid import uuid4
 
-from pydantic import ConfigDict, PlainSerializer, computed_field
+from pydantic import UUID4, ConfigDict
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import MetaData
@@ -40,14 +40,9 @@ MODELS: dict[str, type[SQLModel]] = {}
 default_model_mixin_metadata = MetaData(naming_convention={k: v.name for k, v in NAMING_CONVENTION_DICT.items()})
 
 
-UUIDSerializer = PlainSerializer(func=str, return_type=str, when_used="json-unless-none")
-UUIDField = Annotated[UUID, UUIDSerializer]
-NullableUUIDField = Annotated[UUID | None, UUIDSerializer]
-
-
 class DefaultModelMixin(SQLModel, table=False):
     id: Annotated[
-        UUIDField,
+        UUID4,
         Field(
             primary_key=True,
             index=True,
@@ -76,14 +71,19 @@ class DefaultModelMixin(SQLModel, table=False):
 
     metadata = default_model_mixin_metadata
 
+    # SQLModel don't validate by default
+    # - https://github.com/fastapi/sqlmodel/issues/52
+    # - https://github.com/fastapi/sqlmodel/discussions/925
+    # - https://github.com/fastapi/sqlmodel/pull/1041
+    # This causes issues when using with FastAPI, especially for request body validation.
+    # ex) id field is UUID4, but result object (from FastAPI Depends) has id as str.
+    # So we enable validate_assignment here.
+    # And also, We cannot import SQLModelConfig from sqlmodel as it is not exposed, so we use Pydantic's ConfigDict.
+    model_config = ConfigDict(validate_assignment=True)  # type: ignore[assignment]
+
     @declared_attr  # type: ignore[arg-type]
     def __tablename__(cls) -> str:
         return cls.__name__.lower()
-
-    @computed_field  # type: ignore[prop-decorator]  # See https://github.com/python/mypy/issues/1362
-    @property
-    def representation(self) -> str:
-        return f"{self.__class__.__name__}(id={self.id})"
 
     @classmethod
     def __init_subclass__(cls, *args: tuple, **kwargs: Unpack[ConfigDict]) -> None:
@@ -93,17 +93,9 @@ class DefaultModelMixin(SQLModel, table=False):
 
 class ConfigNode(DefaultModelMixin, table=True):
     name: Annotated[str, Field(nullable=False, index=True, unique=True)]
-    parent_id: Annotated[
-        UUIDField | None,
-        Field(foreign_key="confignode.id", nullable=True, default=None),
-    ]
+    parent_id: Annotated[UUID4 | None, Field(foreign_key="confignode.id", nullable=True, default=None)]
 
     autoinstall_config: Annotated[str, Field(nullable=False)]  # JSON serialized value
-
-    @computed_field  # type: ignore[prop-decorator]  # See DefaultModelMixin.representation
-    @property
-    def representation(self) -> str:
-        return f"{self.__class__.__name__}(id={self.id})"
 
 
 class Device(DefaultModelMixin, table=True):
@@ -118,9 +110,4 @@ class Device(DefaultModelMixin, table=True):
         ),
     ]
 
-    config_node_id: Annotated[UUID, Field(foreign_key="confignode.id", nullable=False)]
-
-    @computed_field  # type: ignore[prop-decorator]  # See DefaultModelMixin.representation
-    @property
-    def representation(self) -> str:
-        return f"{self.__class__.__name__}(id={self.id})"
+    config_node_id: Annotated[UUID4, Field(foreign_key="confignode.id", nullable=False)]
