@@ -52,13 +52,13 @@ export const useCreateMutation = <T>(client: APIClient, resource: string) =>
     mutationFn: create<T>(client, resource),
   })
 
-export const useUpdateMutation = <T>(client: APIClient, resource: string, id: string) =>
+export const useUpdateMutation = <T>(client: APIClient, resource: string) =>
   useMutation({
-    mutationKey: [...MUTATION_KEYS.UPDATE, resource, id],
-    mutationFn: update<T>(client, resource, id),
+    mutationKey: [...MUTATION_KEYS.UPDATE, resource],
+    mutationFn: update<T>(client, resource),
   })
 
-export const useUpdatePreparedMutation = <T extends { id: string }>(client: APIClient, resource: string) =>
+export const useUpdatePreparedMutation = <T>(client: APIClient, resource: string) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.UPDATE, resource, 'prepared'],
     mutationFn: updatePrepared<T>(client, resource),

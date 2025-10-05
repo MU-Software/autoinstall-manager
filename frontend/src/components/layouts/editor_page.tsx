@@ -162,7 +162,7 @@ export const Editor: React.FC<EditorPropsType & { id?: string }> = ErrorBoundary
     const apiClient = useAPIClient()
     const { data: schemaInfo } = useSchemaQuery(apiClient, resource)
     const createMutation = useCreateMutation<Record<string, string>>(apiClient, resource)
-    const modifyMutation = useUpdateMutation<Record<string, string>>(apiClient, resource, id || 'undefined')
+    const modifyMutation = useUpdateMutation<Record<string, string>>(apiClient, resource)
     const deleteMutation = useRemoveMutation(apiClient, resource, id || 'undefined')
     const submitMutation = id ? modifyMutation : createMutation
 

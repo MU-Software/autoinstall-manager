@@ -19,14 +19,14 @@ export const create =
     client.post<T, Omit<T, 'id'>>(`${resource}/`, data)
 
 export const update =
-  <T>(client: APIClient, resource: string, id: string) =>
+  <T>(client: APIClient, resource: string) =>
   (data: T) =>
-    client.patch<T, T>(`${resource}/${id}/`, data)
+    client.put<T, T>(`${resource}`, data)
 
 export const updatePrepared =
-  <T extends { id: string }>(client: APIClient, resource: string) =>
+  <T>(client: APIClient, resource: string) =>
   (data: T) =>
-    client.patch<T, T>(`${resource}/${data.id}/`, data)
+    client.put<T, T>(`${resource}`, data)
 
 export const remove = (client: APIClient, resource: string, id: string) => () => client.delete<void>(`${resource}/${id}/`)
 
