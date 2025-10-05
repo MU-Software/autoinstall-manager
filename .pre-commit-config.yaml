@@ -99,5 +99,8 @@ repos:
     -   id: eslint-pnpm
         name: ESLint with pnpm
         files: ^frontend/
-        language: system
-        entry: pnpm lint --fix
+        language: node
+        entry: ./node_modules/.bin/eslint
+        args:
+          - --config=./eslint.config.js
+          - --fix
