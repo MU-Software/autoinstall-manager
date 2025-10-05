@@ -6,9 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession as SQLModelAsyncSession
 from src.settings import ProjectSetting
 
 
-def config_di(
-    request: Request,
-) -> Generator[ProjectSetting, None, None]:  # pragma: no cover
+def config_di(request: Request) -> Generator[ProjectSetting, None, None]:
     yield cast(ProjectSetting, cast(FastAPI, request.app).state.config)
 
 
