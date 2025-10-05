@@ -19,7 +19,7 @@ class DeviceRepository(RepositoryImpl[Device]):
         result = await self.session.exec(
             select(
                 self.model.id,
-                func.concat("Device: ", self.model.name, "(", self.model.id, ")", "[", tree.c.path, "]"),
+                func.concat(self.model.name, " (using config-node='", tree.c.path, "')"),
                 self.model.created_at,
                 self.model.updated_at,
             )
@@ -31,7 +31,7 @@ class DeviceRepository(RepositoryImpl[Device]):
     async def list_enum_values(self) -> Sequence[EnumValue]:
         tree = ConfigNodeQuery.get_nested_title_cte()
         result = await self.session.exec(
-            select(self.model.id, func.concat("Device: ", self.model.name, "(", self.model.id, ")", "[", tree.c.path, "]"))
+            select(self.model.id, func.concat(self.model.name, " (using config-node='", tree.c.path, "')"))
             .select_from(self.model)
             .join(tree, col(self.model.config_node_id) == col(tree.c.id))
         )
