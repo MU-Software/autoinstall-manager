@@ -15,8 +15,6 @@ export const addErrorSnackbar = (error: Error) => {
     <Stack>
       에러가 발생했습니다, 콘솔을 확인해주세요.
       <br />
-      문제가 지속되면, 홈페이지팀에 콘솔 내용과 함께 문의해주세요!
-      <br />
       <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{error.message}</pre>
     </Stack>,
     'error'
