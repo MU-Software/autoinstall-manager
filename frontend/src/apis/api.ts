@@ -1,4 +1,4 @@
-import type { SchemaDefinition } from '@frontend/schemas/api'
+import type { EnumValue, SchemaDefinition } from '@frontend/schemas/api'
 import { APIClient } from './client'
 
 export const list =
@@ -33,3 +33,5 @@ export const remove = (client: APIClient, resource: string, id: string) => () =>
 export const removePrepared = (client: APIClient, resource: string) => (id: string) => client.delete<void>(`${resource}/${id}/`)
 
 export const schema = (client: APIClient, resource: string) => () => client.get<SchemaDefinition>(`json-schemas/${resource}`)
+
+export const listSelectableEnums = (client: APIClient, resource: string) => () => client.get<EnumValue[]>(`${resource}/enum-values/`)

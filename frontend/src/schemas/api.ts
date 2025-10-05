@@ -15,3 +15,8 @@ export type SchemaDefinition = {
   schema: RJSFSchema
   ui_schema: UiSchema
 }
+
+export type EnumValue = {
+  const: string // UUID
+  title: string
+}

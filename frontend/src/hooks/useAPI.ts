@@ -1,6 +1,6 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 
-import { create, list, remove, removePrepared, retrieve, schema, update, updatePrepared } from '@frontend/apis/api'
+import { create, list, listSelectableEnums, remove, removePrepared, retrieve, schema, update, updatePrepared } from '@frontend/apis/api'
 import { APIClient } from '@frontend/apis/client'
 import { useAppContext } from './useApp'
 
@@ -8,6 +8,7 @@ const QUERY_KEYS = {
   SCHEMA: ['query', 'schema'],
   LIST: ['query', 'list'],
   RETRIEVE: ['query', 'retrieve'],
+  LIST_SELECTABLE_ENUMS: ['query', 'list_selectable_enums'],
 }
 
 const MUTATION_KEYS = {
@@ -25,6 +26,12 @@ export const useSchemaQuery = (client: APIClient, resource: string) =>
   useSuspenseQuery({
     queryKey: [...QUERY_KEYS.SCHEMA, resource],
     queryFn: schema(client, resource),
+  })
+
+export const useListSelectableEnumsQuery = (client: APIClient, resource: string) =>
+  useSuspenseQuery({
+    queryKey: [...QUERY_KEYS.LIST_SELECTABLE_ENUMS, resource],
+    queryFn: listSelectableEnums(client, resource),
   })
 
 export const useListQuery = <T>(client: APIClient, resource: string, params?: Record<string, string>) =>

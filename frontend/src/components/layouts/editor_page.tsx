@@ -1,9 +1,8 @@
 import { Add, Delete, Edit } from '@mui/icons-material'
-import type { ButtonProps, OutlinedSelectProps } from '@mui/material'
+import type { ButtonProps, SelectChangeEvent, SelectProps } from '@mui/material'
 import {
   Box,
   Button,
-  Chip,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -19,26 +18,31 @@ import {
 } from '@mui/material'
 import Form, { type IChangeEvent } from '@rjsf/core'
 import MuiForm from '@rjsf/mui'
-import type { Field, FieldProps, RJSFSchema } from '@rjsf/utils'
+import type { Field, FieldProps, RJSFSchema, UiSchema } from '@rjsf/utils'
 import { customizeValidator } from '@rjsf/validator-ajv8'
 import { ErrorBoundary, Suspense } from '@suspensive/react'
 import AjvDraft04 from 'ajv-draft-04'
 import type { JSONSchema7 } from 'json-schema'
 import React from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import * as R from 'remeda'
 
-import { retrieve } from '@frontend/apis/api'
 import { ErrorFallback } from '@frontend/elements/error_handler'
-import { useAPIClient, useCreateMutation, useRemoveMutation, useSchemaQuery, useUpdateMutation } from '@frontend/hooks/useAPI'
+import {
+  useAPIClient,
+  useCreateMutation,
+  useListSelectableEnumsQuery,
+  useRemoveMutation,
+  useRetrieveQuery,
+  useSchemaQuery,
+  useUpdateMutation,
+} from '@frontend/hooks/useAPI'
 import { filterReadOnlyPropertiesInJsonSchema, filterWritablePropertiesInJsonSchema } from '@frontend/utils/json_schema'
 import { addErrorSnackbar, addSnackbar } from '@frontend/utils/snackbar'
-import { isNumeric } from '@frontend/utils/string'
+import { isUUID } from '@frontend/utils/string'
 
 type EditorFormDataEventType = IChangeEvent<Record<string, string>, RJSFSchema, { [k in string]: unknown }>
 type onSubmitType = (data: Record<string, string>, event: React.FormEvent<unknown>) => void
 
-type AppResourceIdType = { resource: string; id?: string }
 type EditorPropsType = React.PropsWithChildren<{
   resource: string
   initialData?: Record<string, string>
@@ -47,18 +51,36 @@ type EditorPropsType = React.PropsWithChildren<{
   extraActions?: ButtonProps[]
 }>
 
-type DescriptiveEnum = { const: string; title: string }
-type DescriptiveEnumObject = Record<string, DescriptiveEnum>
-
-const SelectedChipRenderer: React.FC<{ selectable: DescriptiveEnumObject; selected: string[] }> = ({ selectable, selected }) => {
-  const children = selected.map((v) => <Chip key={v} label={selectable[v].title || ''} />)
-  return <Stack sx={{ flexWrap: 'wrap' }} direction="row" spacing={0.5} children={children} />
+type CustomMUISelectedAdditionalData = {
+  schema: JSONSchema7
+  errorSchema?: RJSFSchema
+  uiSchema?: Record<string, UiSchema>
+  idSchema: { $id: string; [k: string]: unknown }
+  formContext: { [k: string]: unknown }
+  wasPropertyKeyModified?: boolean
+  registry: unknown
+  rawErrors?: string[]
+  hideError?: boolean
+  idPrefix?: string
+  idSeparator?: string
 }
 
-const fieldPropsToSelectedProps = (props: FieldProps): OutlinedSelectProps & { defaultValue: string[] } => {
+const isNullableField = (schema: JSONSchema7): boolean => {
+  if (Array.isArray(schema.type)) return schema.type.includes('null')
+
+  const anyOfOrOneOf = schema.anyOf || schema.oneOf
+  if (anyOfOrOneOf) {
+    for (const subSchema of anyOfOrOneOf) if (isNullableField(subSchema as JSONSchema7)) return true
+    return false
+  }
+
+  return schema.type === 'null'
+}
+
+const rjsfFieldPropsToMUISelectedProps = (props: FieldProps): SelectProps & { additionaldata: CustomMUISelectedAdditionalData } => {
   const {
     name,
-    formData,
+    formData: defaultValue,
     autofocus: autoFocus,
     readonly: readOnly,
     onFocus: rawOnFocus,
@@ -82,7 +104,7 @@ const fieldPropsToSelectedProps = (props: FieldProps): OutlinedSelectProps & { d
     color,
     ...rest
   } = props
-  const data = {
+  const additionaldata: CustomMUISelectedAdditionalData = {
     schema,
     errorSchema,
     uiSchema,
@@ -97,29 +119,38 @@ const fieldPropsToSelectedProps = (props: FieldProps): OutlinedSelectProps & { d
   }
   const onFocus = (event: React.FocusEvent<HTMLInputElement>) => rawOnFocus(event.currentTarget.name, event.currentTarget.value)
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => rawOnBlur(event.currentTarget.name, event.currentTarget.value)
-  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => rawOnChange(event.target.value, undefined, event.target.name)
-  const sx: OutlinedSelectProps['sx'] = color ? { color, borderColor: color } : {}
-  const defaultValue = (formData ? (R.isArray(formData) ? formData : [formData.toString()]) : []) as string[]
-  return R.addProp({ ...rest, name, label: name, defaultValue, autoFocus, readOnly, onFocus, onBlur, onChange, sx }, 'data-rjsf', data)
+  const onChange = (event: SelectChangeEvent<unknown>) => rawOnChange(event.target.value, undefined, event.target.name)
+  const sx: SelectProps['sx'] = color ? { color, borderColor: color } : {}
+  return { ...rest, name, label: name, defaultValue, autoFocus, readOnly, onFocus, onBlur, onChange, sx, additionaldata }
 }
 
-const M2MSelect: Field = ErrorBoundary.with(
+const ForeignKeyField: Field = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, (props) => {
-    const selectable = (props.schema.items as JSONSchema7).oneOf as DescriptiveEnum[]
-    const selectableListObj: DescriptiveEnumObject = selectable.reduce((a, i) => ({ ...a, [i.const]: i }), {} as DescriptiveEnumObject)
-    const children = selectable.map((i) => <MenuItem key={i.const} value={i.const} children={i.title || i.const} />)
-    const selectRenderer = (selected: string[]) => <SelectedChipRenderer selectable={selectableListObj} selected={selected} />
+    const selectedProps = rjsfFieldPropsToMUISelectedProps(props)
+
+    const uiOptions = selectedProps.additionaldata.uiSchema?.['ui:options']
+    if (!uiOptions) throw new Error('ui:options is undefined in uiSchema')
+
+    const resourceName = uiOptions.resourceName
+    if (!resourceName) throw new Error('resourceName is undefined in ui:options of uiSchema')
+
+    const apiClient = useAPIClient()
+    const { data } = useListSelectableEnumsQuery(apiClient, resourceName)
+
+    const children = data.map((i) => <MenuItem key={i.const} value={i.const} children={i.title} />)
+    if (isNullableField(selectedProps.additionaldata.schema)) children.unshift(<MenuItem key="__null__" children="(없음)" />)
+
     return (
       <FormControl fullWidth>
         <InputLabel id={`${props.name}-label`} children={props.name} />
-        <Select {...fieldPropsToSelectedProps(props)} children={children} multiple fullWidth renderValue={selectRenderer} />
+        <Select {...selectedProps} labelId={`${props.name}-label`} children={children} fullWidth />
       </FormControl>
     )
   })
 )
 
-export const Editor: React.FC<AppResourceIdType & EditorPropsType> = ErrorBoundary.with(
+export const Editor: React.FC<EditorPropsType & { id?: string }> = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ resource, id, initialData, beforeSubmit, afterSubmit, extraActions, children }) => {
     const navigate = useNavigate()
@@ -219,7 +250,7 @@ export const Editor: React.FC<AppResourceIdType & EditorPropsType> = ErrorBounda
                 'ui:submitButtonOptions': { norender: true },
               }}
               validator={customizeValidator({ AjvClass: AjvDraft04 })}
-              formData={editorState.formData}
+              formData={editorState}
               liveValidate
               focusOnFirstError
               formContext={{ readonlyAsDisabled: true }}
@@ -227,7 +258,7 @@ export const Editor: React.FC<AppResourceIdType & EditorPropsType> = ErrorBounda
               onSubmit={onSubmitFunc}
               disabled={disabled}
               showErrorList={false}
-              fields={{ m2m_select: M2MSelect }}
+              fields={{ ForeignKeyField }}
             />
           </Box>
         </Stack>
