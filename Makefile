@@ -112,6 +112,13 @@ iso-boot-modified: bios-download
 		-device ide-cd,bus=sata.2,drive=cdrom \
 		-bios $(BIOS) -boot order=d -serial stdio
 
+# ================= Autoinstall manager project ==================
+local-lint:
+	@uv run pre-commit run --all-files
+
+local-mypy:
+	@uv run pre-commit run mypy --all-files
+
 # ================= Autoinstall manager backend ==================
 MIGRATION_MESSAGE ?= `date +"%Y%m%d_%H%M%S"`
 UPGRADE_VERSION ?= head
@@ -147,12 +154,6 @@ local-backend-hook-install:
 local-backend-hook-upgrade:
 	@uv run pre-commit run autoupdate
 
-local-backend-lint:
-	@uv run pre-commit run --all-files
-
-local-backend-mypy:
-	@uv run pre-commit run mypy --all-files
-
 local-backend-run:
 	@ENV_FILE=$(DOTENV_LOCAL) uv run python -m backend
 
@@ -174,6 +175,3 @@ local-frontend-run:
 
 local-frontend-build:
 	@pnpm run build
-
-local-frontend-lint:
-	@pnpm run lint
