@@ -7,6 +7,10 @@ import { ErrorFallback } from '@frontend/elements/error_handler'
 import { LinkHandler } from '@frontend/elements/link_handler'
 import { useAPIClient, useListQuery } from '@frontend/hooks/useAPI'
 
+const EVEN = 'rgba(0, 0, 0, 0)'
+const ODD = 'rgba(0, 0, 0, 0.1)'
+const HOVER = 'rgba(0, 0, 0, 0.2)'
+
 export const ListPage: React.FC<{ resource: string }> = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ resource }) => {
@@ -32,14 +36,16 @@ export const ListPage: React.FC<{ resource: string }> = ErrorBoundary.with(
             </TableRow>
           </TableHead>
           <TableBody>
-            {listQuery.data?.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} children={item.id} />} />
-                <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} children={item.title} />} />
-                <TableCell children={new Date(item.created_at).toLocaleString()} />
-                <TableCell children={new Date(item.updated_at).toLocaleString()} />
-              </TableRow>
-            ))}
+            {listQuery.data
+              ?.sort((a, b) => a.title.localeCompare(b.title))
+              .map((item, index) => (
+                <TableRow key={item.id} sx={{ backgroundColor: index % 2 === 0 ? EVEN : ODD, '&:hover': { backgroundColor: HOVER } }}>
+                  <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} style={{ textDecoration: 'none' }} children={item.id} />} />
+                  <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} style={{ textDecoration: 'none' }} children={item.title} />} />
+                  <TableCell children={new Date(item.created_at).toLocaleString()} />
+                  <TableCell children={new Date(item.updated_at).toLocaleString()} />
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </Stack>
