@@ -1,9 +1,10 @@
 import * as R from 'remeda'
 
+export const UUID_REGEX = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+
 export const isFilledString = (obj: unknown): obj is string => R.isString(obj) && !R.isEmpty(obj)
 
-// @ts-expect-error isNaN이 들어가는 순간 is string이 깨짐
-export const isNumeric: (obj: unknown) => obj is string = (obj) => isFilledString(obj) && !isNaN(Number(obj))
+export const isUUID = (obj: unknown): obj is string => R.isString(obj) && UUID_REGEX.test(obj)
 
 export const isValidHttpUrl = (obj: unknown): obj is string => {
   try {

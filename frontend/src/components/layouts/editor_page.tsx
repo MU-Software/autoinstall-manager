@@ -259,17 +259,21 @@ export const Editor: React.FC<AppResourceIdType & EditorPropsType> = ErrorBounda
   })
 )
 
-export const EditorRoutePage: React.FC<EditorPropsType> = Suspense.with({ fallback: <CircularProgress /> }, async (props) => {
+const PreparedEditor: React.FC<EditorPropsType & { id: string }> = ({ id, ...props }) => {
+  const apiClient = useAPIClient()
+  const { data } = useRetrieveQuery<Record<string, string>>(apiClient, props.resource, id)
+  return <Editor {...props} initialData={{ ...data, ...props.initialData }} id={id} />
+}
+
+export const EditorRoutePage: React.FC<EditorPropsType> = (props) => {
   const { id } = useParams<{ id?: string }>()
   if (id === 'create') return <Editor {...props} />
 
   const { resource } = props
-  if (!isNumeric(id)) {
+  if (!isUUID(id)) {
     alert('유효하지 않은 ID입니다.')
     return <Navigate to={`/${resource}`} replace />
   }
 
-  const apiClient = useAPIClient()
-  props.initialData = { ...(await retrieve<Record<string, string>>(apiClient, resource, id)()), ...props.initialData }
-  return <Editor {...props} id={id} />
-})
+  return <Suspense fallback={<CircularProgress />} children={<PreparedEditor {...props} id={id} />} />
+}
