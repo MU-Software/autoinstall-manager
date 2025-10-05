@@ -7,7 +7,8 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import func
 from sqlmodel.sql.expression import any_, col, not_, select
 from src.models import ConfigNode, Device
-from src.repositories import EnumValue, RepositoryImpl
+from src.repositories import RepositoryImpl
+from src.schemas.enum_value import EnumValue
 
 
 class DeviceRepository(RepositoryImpl[Device]):

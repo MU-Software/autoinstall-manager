@@ -8,7 +8,8 @@ from sqlalchemy.sql.elements import literal
 from sqlalchemy.sql.expression import func
 from sqlmodel.sql.expression import any_, col, not_, or_, select
 from src.models import ConfigNode
-from src.repositories import EnumValue, RepositoryImpl
+from src.repositories import RepositoryImpl
+from src.schemas.enum_value import EnumValue
 
 
 class ConfigNodeRepository(RepositoryImpl[ConfigNode]):
