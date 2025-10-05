@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   FormControl,
   InputLabel,
   MenuItem,
@@ -242,11 +243,13 @@ export const Editor: React.FC<EditorPropsType & { id?: string }> = ErrorBoundary
                 </TableBody>
               </Table>
             )}
+            <Divider sx={{ my: 2 }} />
             <MuiForm
               ref={formRef}
               schema={writableSchema}
               uiSchema={{
                 ...schemaInfo.ui_schema,
+                'ui:options': { label: false, submitOnEnter: false },
                 'ui:submitButtonOptions': { norender: true },
               }}
               validator={customizeValidator({ AjvClass: AjvDraft04 })}
