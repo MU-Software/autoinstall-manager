@@ -306,5 +306,11 @@ export const EditorRoutePage: React.FC<EditorPropsType> = (props) => {
     return <Navigate to={`/${resource}`} replace />
   }
 
-  return <Suspense fallback={<CircularProgress />} children={<PreparedEditor {...props} id={id} />} />
+  return (
+    <ErrorBoundary fallback={ErrorFallback}>
+      <Suspense fallback={<CircularProgress />}>
+        <PreparedEditor {...props} id={id} />
+      </Suspense>
+    </ErrorBoundary>
+  )
 }
