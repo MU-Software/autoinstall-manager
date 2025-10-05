@@ -76,6 +76,8 @@ async def psycopg_integrityerror_handler(req: Request, err: IntegrityError) -> J
         case RestrictViolation():
             return DBValueError.DB_RESTRICT_CONSTRAINT_ERROR.response()
         case NotNullViolation():
+            if err.diag.column_name:
+                return DBValueError.DB_NOT_NULL_CONSTRAINT_ERROR(loc=[err.diag.column_name]).response()
             return DBValueError.DB_NOT_NULL_CONSTRAINT_ERROR.response()
         case ForeignKeyViolation():
             return DBValueError.DB_NOT_NULL_CONSTRAINT_ERROR.format_msg(referred_table_name=err.diag.table_name or "").response()
