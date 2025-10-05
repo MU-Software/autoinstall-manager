@@ -2,13 +2,13 @@
 # See https://pre-commit.com/hooks.html for more hooks
 default_language_version: { python: python3.13 }
 default_stages: [pre-commit, pre-push]
-files: ^backend/
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
     - id: check-json
+      exclude: tsconfig.json
     - id: check-toml
     - id: check-xml
     - id: check-yaml
@@ -20,14 +20,19 @@ repos:
     - id: end-of-file-fixer
     - id: mixed-line-ending
     - id: pretty-format-json
+      exclude: |
+            (?x)^(
+                tsconfig.json|
+                package.json
+            )$
     - id: trailing-whitespace
       exclude_types:
-        - javascript
         - markdown
 -   repo: https://github.com/PyCQA/flake8
     rev: 7.3.0
     hooks:
     - id: flake8
+      files: ^backend/
       additional_dependencies:
         - flake8-bugbear
         - flake8-noqa
@@ -38,10 +43,12 @@ repos:
     rev: '25.9.0'
     hooks:
     - id: black
+      files: ^backend/
 -   repo: https://github.com/PyCQA/bandit
     rev: '1.8.6'
     hooks:
     - id: bandit
+      files: ^backend/
       args:
         - -c
         - pyproject.toml
@@ -51,10 +58,12 @@ repos:
     rev: '6.0.1'
     hooks:
       - id: isort
+        files: ^backend/
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v1.18.2'
     hooks:
       - id: mypy
+        files: ^backend/
         additional_dependencies:
           - alembic
           - fastapi
@@ -69,15 +78,26 @@ repos:
     rev: v2.2.0
     hooks:
       - id: refurb
+        files: ^backend/
         additional_dependencies:
           - pydantic
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.13.2
     hooks:
       - id: ruff-check
+        files: ^backend/
         args: [ --fix ]
       - id: ruff-format
+        files: ^backend/
 -   repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.8.22
     hooks:
       - id: uv-lock
+        files: ^backend/
+-   repo: local
+    hooks:
+    -   id: eslint-pnpm
+        name: ESLint with pnpm
+        files: ^frontend/
+        language: system
+        entry: pnpm lint --fix
