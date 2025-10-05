@@ -5,14 +5,15 @@ from fastapi import APIRouter
 from src.consts.tags import OpenAPITag
 from src.models import Device
 from src.schemas.enum_value import EnumValue
+from src.schemas.list_value import ListValue
 from src.services.device import deviceServiceDI
 
 device_router = APIRouter(prefix="/device", tags=[OpenAPITag.DEVICE])
 
 
-@device_router.get("/", response_model=Sequence[Device])
-async def list_devices(device_svc: deviceServiceDI) -> Sequence[Device]:
-    return await device_svc.list()
+@device_router.get("/", response_model=Sequence[ListValue])
+async def list_devices(device_svc: deviceServiceDI) -> Sequence[ListValue]:
+    return await device_svc.list_values()
 
 
 @device_router.get("/enum-values", response_model=Sequence[EnumValue])

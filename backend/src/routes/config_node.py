@@ -5,14 +5,15 @@ from fastapi import APIRouter
 from src.consts.tags import OpenAPITag
 from src.models import ConfigNode
 from src.schemas.enum_value import EnumValue
+from src.schemas.list_value import ListValue
 from src.services.config_node import configNodeServiceDI
 
 config_node_router = APIRouter(prefix="/confignode", tags=[OpenAPITag.CONFIG_NODE])
 
 
-@config_node_router.get("/", response_model=Sequence[ConfigNode])
-async def list_config_nodes(config_node_svc: configNodeServiceDI) -> Sequence[ConfigNode]:
-    return await config_node_svc.list()
+@config_node_router.get("/", response_model=Sequence[ListValue])
+async def list_config_nodes(config_node_svc: configNodeServiceDI) -> Sequence[ListValue]:
+    return await config_node_svc.list_values()
 
 
 @config_node_router.get("/enum-values", response_model=Sequence[EnumValue])

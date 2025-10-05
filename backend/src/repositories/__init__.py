@@ -13,6 +13,7 @@ from src.consts.errors import ClientError, ServerError
 from src.dependencies import dbDI
 from src.models import DefaultModelMixin
 from src.schemas.enum_value import EnumValue
+from src.schemas.list_value import ListValue
 
 M = TypeVar("M", bound=DefaultModelMixin)
 
@@ -91,6 +92,9 @@ class RepositoryImpl(BaseModel, Generic[M]):
 
     async def delete_by_id(self, id: UUID) -> None:
         await self.delete(obj=await self.retrieve_by_id(id=id, with_for_update=True))
+
+    async def list_values(self) -> Sequence[ListValue]:
+        raise NotImplementedError("subclasses must implement list_values")
 
     async def list_enum_values(self) -> Sequence[EnumValue]:
         raise NotImplementedError("subclasses must implement list_enum_values")

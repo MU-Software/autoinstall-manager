@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from src.models import DefaultModelMixin
 from src.repositories import ListKwargsType, QueryType, RepositoryImpl
 from src.schemas.enum_value import EnumValue
+from src.schemas.list_value import ListValue
 
 M = TypeVar("M", bound=DefaultModelMixin)
 
@@ -36,6 +37,9 @@ class ServiceImpl(BaseModel, Generic[M]):
 
     async def delete_by_id(self, id: UUID) -> None:
         await self.repository.delete_by_id(id=id)
+
+    async def list_values(self) -> Sequence[ListValue]:
+        return await self.repository.list_values()
 
     async def list_enum_values(self) -> Sequence[EnumValue]:
         return await self.repository.list_enum_values()
