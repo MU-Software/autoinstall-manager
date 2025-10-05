@@ -23,3 +23,18 @@ async def list_device_enum_values(device_svc: deviceServiceDI) -> Sequence[EnumV
 @device_router.get("/{device_id}", response_model=Device)
 async def retrieve_device(device_id: UUID, device_svc: deviceServiceDI) -> Device:
     return await device_svc.retrieve_by_id(id=device_id)
+
+
+@device_router.post("/", response_model=Device)
+async def create_device(device: Device, device_svc: deviceServiceDI) -> Device:
+    return await device_svc.create(obj=device)
+
+
+@device_router.put("/", response_model=Device)
+async def update_device(device: Device, device_svc: deviceServiceDI) -> Device:
+    return await device_svc.update(obj=device)
+
+
+@device_router.delete("/{device_id}", response_model=None)
+async def delete_device(device_id: UUID, device_svc: deviceServiceDI) -> None:
+    await device_svc.delete_by_id(id=device_id)

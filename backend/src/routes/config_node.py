@@ -23,3 +23,18 @@ async def list_config_node_enum_values(config_node_svc: configNodeServiceDI) -> 
 @config_node_router.get("/{config_node_id}", response_model=ConfigNode)
 async def retrieve_config_node(config_node_id: UUID, config_node_svc: configNodeServiceDI) -> ConfigNode:
     return await config_node_svc.retrieve_by_id(id=config_node_id)
+
+
+@config_node_router.post("/", response_model=ConfigNode)
+async def create_config_node(config_node: ConfigNode, config_node_svc: configNodeServiceDI) -> ConfigNode:
+    return await config_node_svc.create(obj=config_node)
+
+
+@config_node_router.put("/", response_model=ConfigNode)
+async def update_config_node(config_node: ConfigNode, config_node_svc: configNodeServiceDI) -> ConfigNode:
+    return await config_node_svc.update(obj=config_node)
+
+
+@config_node_router.delete("/{config_node_id}", response_model=None)
+async def delete_config_node(config_node_id: UUID, config_node_svc: configNodeServiceDI) -> None:
+    await config_node_svc.delete_by_id(id=config_node_id)

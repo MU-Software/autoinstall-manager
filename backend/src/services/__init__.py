@@ -28,8 +28,14 @@ class ServiceImpl(BaseModel, Generic[M]):
     async def create(self, obj: M) -> M:
         return await self.repository.create(obj=obj)
 
+    async def update(self, obj: M) -> M:
+        return await self.repository.update(obj=obj)
+
     async def delete(self, obj: M) -> None:
         await self.repository.delete(obj=obj)
+
+    async def delete_by_id(self, id: UUID) -> None:
+        await self.repository.delete_by_id(id=id)
 
     async def list_enum_values(self) -> Sequence[EnumValue]:
         return await self.repository.list_enum_values()

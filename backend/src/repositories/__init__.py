@@ -20,6 +20,8 @@ QueryType: TypeAlias = ColumnElement[bool]
 OrderExpr: TypeAlias = ColumnElement | UnaryExpression
 OrderByType: TypeAlias = list[OrderExpr]
 
+DEFAULT_NOT_MODIFIABLE_FIELDS = {"id", "created_at", "updated_at"}
+
 
 class ListKwargsType(TypedDict, total=False):
     filter: QueryType
@@ -42,17 +44,20 @@ class RepositoryImpl(BaseModel, Generic[M]):
         query = select(func.count()).select_from(self.model).where(filter or true())
         return (await self.session.scalar(query)) or 0
 
-    async def retrieve_by_query(self, filter: QueryType) -> M:
+    async def retrieve_by_query(self, filter: QueryType, with_for_update: bool = False) -> M:
         try:
             query = select(self.model).where(filter)
+            if with_for_update:
+                query = query.with_for_update()
+
             return (await self.session.scalars(query)).one()
         except NoResultFound:
             ClientError.RESOURCE_NOT_FOUND.raise_()
         except MultipleResultsFound:
             ServerError.MULTIPLE_RESOURCES_FOUND.raise_()
 
-    async def retrieve_by_id(self, id: UUID) -> M:
-        return await self.retrieve_by_query(col(self.model.id) == id)
+    async def retrieve_by_id(self, id: UUID, with_for_update: bool = False) -> M:
+        return await self.retrieve_by_query(col(self.model.id) == id, with_for_update=with_for_update)
 
     async def list(self, **kwargs: Unpack[ListKwargsType]) -> Sequence[M]:
         filter: QueryType = kwargs.get("filter", true())
@@ -65,14 +70,27 @@ class RepositoryImpl(BaseModel, Generic[M]):
 
     async def create(self, obj: M) -> M:
         self.session.add(obj)
-        await self.session.commit()
         await self.session.flush()
         await self.session.refresh(obj)
         return obj
 
+    async def update(self, obj: M) -> M:
+        if not obj.id:
+            ClientError.REQUEST_BODY_LACK.raise_()
+
+        db_obj = await self.retrieve_by_id(id=obj.id, with_for_update=True)
+        for key, value in obj.model_dump(exclude_unset=True, exclude=DEFAULT_NOT_MODIFIABLE_FIELDS).items():
+            setattr(db_obj, key, value)
+
+        await self.session.flush()
+        await self.session.refresh(db_obj)
+        return db_obj
+
     async def delete(self, obj: M) -> None:
         await self.session.delete(obj)
-        await self.session.commit()
+
+    async def delete_by_id(self, id: UUID) -> None:
+        await self.delete(obj=await self.retrieve_by_id(id=id, with_for_update=True))
 
     async def list_enum_values(self) -> Sequence[EnumValue]:
         raise NotImplementedError("subclasses must implement list_enum_values")
