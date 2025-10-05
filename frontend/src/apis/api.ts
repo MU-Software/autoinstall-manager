@@ -1,10 +1,8 @@
-import type { EnumValue, SchemaDefinition } from '@frontend/schemas/api'
+import type { EnumValue, ListValue, SchemaDefinition } from '@frontend/schemas/api'
 import { APIClient } from './client'
 
-export const list =
-  <T>(client: APIClient, resource: string, params?: Record<string, string>) =>
-  () =>
-    client.get<T[]>(`${resource}/`, { params })
+export const list = (client: APIClient, resource: string, params?: Record<string, string>) => () =>
+  client.get<ListValue[]>(`${resource}/`, { params })
 
 export const retrieve =
   <T>(client: APIClient, resource: string, id: string) =>

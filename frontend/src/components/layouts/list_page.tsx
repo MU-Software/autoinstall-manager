@@ -7,18 +7,11 @@ import { ErrorFallback } from '@frontend/elements/error_handler'
 import { LinkHandler } from '@frontend/elements/link_handler'
 import { useAPIClient, useListQuery } from '@frontend/hooks/useAPI'
 
-type ListRowType = Record<string, unknown> & {
-  id: string
-  title: string
-  created_at: string
-  updated_at: string
-}
-
 export const ListPage: React.FC<{ resource: string }> = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ resource }) => {
     const apiClient = useAPIClient()
-    const listQuery = useListQuery<ListRowType>(apiClient, resource)
+    const listQuery = useListQuery(apiClient, resource)
 
     return (
       <Stack sx={{ flexGrow: 1, width: '100%', minHeight: '100%' }}>

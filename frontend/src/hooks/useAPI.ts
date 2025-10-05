@@ -34,10 +34,10 @@ export const useListSelectableEnumsQuery = (client: APIClient, resource: string)
     queryFn: listSelectableEnums(client, resource),
   })
 
-export const useListQuery = <T>(client: APIClient, resource: string, params?: Record<string, string>) =>
+export const useListQuery = (client: APIClient, resource: string, params?: Record<string, string>) =>
   useSuspenseQuery({
     queryKey: [...QUERY_KEYS.LIST, resource, JSON.stringify(params)],
-    queryFn: list<T>(client, resource, params),
+    queryFn: list(client, resource, params),
   })
 
 export const useRetrieveQuery = <T>(client: APIClient, resource: string, id: string) =>

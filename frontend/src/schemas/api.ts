@@ -20,3 +20,10 @@ export type EnumValue = {
   const: string // UUID
   title: string
 }
+
+export type ListValue = {
+  id: string
+  title: string
+  created_at: string
+  updated_at: string
+}
