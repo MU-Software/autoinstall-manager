@@ -7,22 +7,16 @@ import { ErrorFallback } from '@frontend/elements/error_handler'
 import { LinkHandler } from '@frontend/elements/link_handler'
 import { useAPIClient, useListQuery } from '@frontend/hooks/useAPI'
 
-type ListPageProps = {
-  resource: string
-  hideCreatedAt?: boolean
-  hideUpdatedAt?: boolean
-}
-
 type ListRowType = Record<string, unknown> & {
   id: string
-  representation: string
+  title: string
   created_at: string
   updated_at: string
 }
 
-export const ListPage: React.FC<ListPageProps> = ErrorBoundary.with(
+export const ListPage: React.FC<{ resource: string }> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CircularProgress /> }, ({ resource, hideCreatedAt, hideUpdatedAt }) => {
+  Suspense.with({ fallback: <CircularProgress /> }, ({ resource }) => {
     const apiClient = useAPIClient()
     const listQuery = useListQuery<ListRowType>(apiClient, resource)
 
@@ -40,17 +34,17 @@ export const ListPage: React.FC<ListPageProps> = ErrorBoundary.with(
             <TableRow>
               <TableCell sx={{ width: '25%' }} children="ID" />
               <TableCell sx={{ width: '40%' }} children="이름" />
-              {hideCreatedAt === true && <TableCell sx={{ width: '17.5%' }} children="생성 시간" />}
-              {hideUpdatedAt === true && <TableCell sx={{ width: '17.5%' }} children="수정 시간" />}
+              <TableCell sx={{ width: '17.5%' }} children="생성 시간" />
+              <TableCell sx={{ width: '17.5%' }} children="수정 시간" />
             </TableRow>
           </TableHead>
           <TableBody>
             {listQuery.data?.map((item) => (
               <TableRow key={item.id}>
                 <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} children={item.id} />} />
-                <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} children={item.representation} />} />
-                {!hideCreatedAt && <TableCell children={new Date(item.created_at).toLocaleString()} />}
-                {!hideUpdatedAt && <TableCell children={new Date(item.updated_at).toLocaleString()} />}
+                <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} children={item.title} />} />
+                <TableCell children={new Date(item.created_at).toLocaleString()} />
+                <TableCell children={new Date(item.updated_at).toLocaleString()} />
               </TableRow>
             ))}
           </TableBody>
