@@ -64,7 +64,7 @@ class DefaultModelMixin(SQLModel, table=False):
         datetime | None,
         Field(
             nullable=False,
-            sa_column_kwargs={"server_default": func.now(), "server_onupdate": func.now()},
+            sa_column_kwargs={"server_default": func.now()},
             schema_extra={"json_schema_extra": {"readOnly": True}},
         ),
     ] = None
