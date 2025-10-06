@@ -24,7 +24,7 @@ export default defineConfig(
   },
   {
     ...cspellESLintPluginRecommended,
-    rules: { '@cspell/spellchecker': ['warn', { cspell: { words: ['rjsf', 'norender', 'confignode'] } }] },
+    rules: { '@cspell/spellchecker': ['warn', { cspell: { words: ['rjsf', 'norender', 'autoinstall', 'confignode'] } }] },
   },
   {
     ignores: ['dist', 'node_modules'],
