@@ -12,6 +12,9 @@
   "dependencies": {
     "@emotion/css": "^11.13.5",
     "@emotion/react": "^11.14.0",
+    "@fontsource/pretendard": "^5.2.5",
+    "@fontsource/ubuntu": "^5.2.8",
+    "@fontsource/ubuntu-mono": "^5.2.8",
     "@frontend/apis": "link:./frontend/src/apis",
     "@frontend/contexts": "link:./frontend/src/contexts",
     "@frontend/elements": "link:./frontend/src/components/elements",

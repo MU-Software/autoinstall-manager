@@ -40,8 +40,8 @@ export const ListPage: React.FC<{ resource: string }> = ErrorBoundary.with(
               ?.sort((a, b) => a.title.localeCompare(b.title))
               .map((item, index) => (
                 <TableRow key={item.id} sx={{ backgroundColor: index % 2 === 0 ? EVEN : ODD, '&:hover': { backgroundColor: HOVER } }}>
-                  <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} style={{ textDecoration: 'none' }} children={item.id} />} />
-                  <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} style={{ textDecoration: 'none' }} children={item.title} />} />
+                  <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} children={item.id} />} />
+                  <TableCell children={<LinkHandler href={`/${resource}/${item.id}`} children={item.title} />} />
                   <TableCell children={new Date(item.created_at).toLocaleString()} />
                   <TableCell children={new Date(item.updated_at).toLocaleString()} />
                 </TableRow>
