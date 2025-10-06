@@ -28,6 +28,42 @@ const ExpandButtonContainer = styled(Stack)(({ theme }) => ({
   [theme.breakpoints.up('sm')]: { width: `calc(${theme.spacing(8)} + 1px)` },
 }))
 
+const PageContainer = styled(Stack)({
+  width: '100%',
+  height: '100%',
+  overflowY: 'auto',
+
+  justifyContent: 'flex-start',
+  alignItems: 'center',
+})
+
+const PageLayout = styled(Stack)(({ theme }) => ({
+  width: '100%',
+  maxWidth: '1500px',
+  flexGrow: 1,
+
+  justifyContent: 'flex-start',
+  alignItems: 'center',
+
+  padding: theme.spacing(8, 16),
+  [theme.breakpoints.down('lg')]: { padding: theme.spacing(4) },
+  [theme.breakpoints.down('sm')]: { padding: theme.spacing(2) },
+}))
+
+const SidebarListItemButton = styled(ListItemButton)(({ theme }) => ({
+  minHeight: theme.mixins.toolbar.height,
+  gap: theme.spacing(2),
+  padding: theme.spacing(1, 0),
+}))
+
+const SidebarListItemIcon = styled(ListItemIcon)(({ theme }) => ({
+  minWidth: 0,
+  justifyContent: 'center',
+
+  width: `calc(${theme.spacing(7)} + 1px)`,
+  [theme.breakpoints.up('sm')]: { width: `calc(${theme.spacing(8)} + 1px)` },
+}))
+
 export const MainLayout: React.FC = () => {
   const navigate = useNavigate()
   const [openDrawer, dispatch] = React.useState<boolean>(false)
@@ -59,15 +95,15 @@ export const MainLayout: React.FC = () => {
               .filter((r) => r.showInSidebar)
               .map((r) => (
                 <ListItem key={r.path} disablePadding>
-                  <ListItemButton sx={{ minHeight: 48, px: 2.5, gap: 3 }} onClick={() => navigate(r.path || '')}>
-                    <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center' }} children={<r.icon />} />
+                  <SidebarListItemButton onClick={() => navigate(r.path || '')}>
+                    <SidebarListItemIcon children={<r.icon />} />
                     <ListItemText primary={r.title} />
-                  </ListItemButton>
+                  </SidebarListItemButton>
                 </ListItem>
               ))}
           </Stack>
         </MiniVariantDrawer>
-        <Outlet />
+        <PageContainer children={<PageLayout children={<Outlet />} />} />
       </Stack>
     </Box>
   )
