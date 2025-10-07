@@ -85,8 +85,8 @@ iso-build: tool-build-image
 	@docker run --privileged --rm -it \
 		--platform linux/amd64 \
 	    -v $(PROJECT_DIR)/subiquity_autoinstall.yaml:/user-data:ro \
-	    -v $(LOCAL_UBUNTU_ISO):$(DOCKER_UBUNTU_ISO):rw \
-	    -v $(LOCAL_OUTPUT_ISO):$(DOCKER_OUTPUT_ISO):ro \
+	    -v $(LOCAL_UBUNTU_ISO):$(DOCKER_UBUNTU_ISO):ro \
+	    -v $(LOCAL_OUTPUT_DIR):$(DOCKER_OUTPUT_DIR):rw \
 		-e UBUNTU_ISO_PATH=$(DOCKER_UBUNTU_ISO) \
 		-e OUTPUT_ISO_PATH=$(DOCKER_OUTPUT_ISO) \
 		image-tools /ubuntu_iso_builder.sh
@@ -102,7 +102,7 @@ iso-boot-original: bios-download
 		-device ich9-ahci,id=sata \
 		-drive id=cdrom,if=none,format=raw,media=cdrom,file="$(LOCAL_UBUNTU_ISO)" \
 		-device ide-cd,bus=sata.2,drive=cdrom \
-		-bios $(BIOS) -boot order=d -serial stdio
+		-bios $(BIOS) -m 4096 -boot order=d -machine q35 -serial stdio -smbios type=1,serial=ABC123456789
 
 iso-boot-modified: bios-download
 	@qemu-system-x86_64 \
@@ -110,7 +110,7 @@ iso-boot-modified: bios-download
 		-device ich9-ahci,id=sata \
 		-drive id=cdrom,if=none,format=raw,media=cdrom,file="$(LOCAL_OUTPUT_ISO)" \
 		-device ide-cd,bus=sata.2,drive=cdrom \
-		-bios $(BIOS) -boot order=d -serial stdio
+		-bios $(BIOS) -m 4096 -boot order=d -machine q35 -serial stdio -smbios type=1,serial=ABC123456789
 
 # ================= Autoinstall manager project ==================
 local-lint:
