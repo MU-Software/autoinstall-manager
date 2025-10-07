@@ -14,10 +14,6 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
 *.code-workspace
 .idea
 .DS_Store
@@ -186,3 +182,7 @@ pip-selfcheck.json
 
 # Execlude nohup output file
 nohup.out
+
+# Exclude Ubuntu iso files and BIOS files
+*.iso
+*.fd
