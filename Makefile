@@ -139,6 +139,9 @@ local-infra-down:
 local-infra-rm: local-infra-down
 	@docker compose --env-file $(DOTENV_LOCAL) -f $(AUTOINSTALL_MANAGER_INFRA_LOCAL) rm
 
+local-backend-db-drop: local-infra-up
+	@ENV_FILE=$(DOTENV_LOCAL) uv run alembic downgrade base
+
 local-backend-db-makemigration: local-infra-up
 	@ENV_FILE=$(DOTENV_LOCAL) uv run alembic revision --autogenerate -m $(MIGRATION_MESSAGE)
 
