@@ -1,33 +1,57 @@
 from collections.abc import Callable
+from datetime import date, datetime, time, timedelta
+from functools import partial
 from os import getenv
 
 import sqlalchemy as sa
-from IPython import start_ipython
+from anyio import to_thread
+from asyncer import syncify
+from IPython.terminal.ipapp import TerminalIPythonApp
 from src.models import MODELS
 from src.settings import ProjectSetting
+from traitlets.config import Config
 
 
-def py_shell() -> None:
+@partial(syncify, raise_sync_error=False)
+async def py_shell() -> None:  # type: ignore[misc]
     config = ProjectSetting.from_dotenv(env_file=getenv("ENV_FILE", ".env"))
 
-    with config.sqlalchemy.sync_session_maker() as session:
+    async with config.sqlalchemy.async_session_maker() as session:
+        ipy_namespace = {
+            # SQLAlchemy
+            "sa": sa,
+            # Datetime utilities
+            "datetime": datetime,
+            "date": date,
+            "time": time,
+            "timedelta": timedelta,
+            "now": datetime.now,
+            "today": date.today,
+            "yesterday": lambda: date.today() - timedelta(days=1),
+            "tomorrow": lambda: date.today() + timedelta(days=1),
+            # App config
+            "config": config,
+            # Database models
+            **MODELS,
+            # Async SQLModel Session
+            "session": session,
+        }
+
+        c = Config()
+        c.TerminalInteractiveShell.autoawait = True
+        c.TerminalInteractiveShell.loop_runner = "asyncio"
+        instance = TerminalIPythonApp.instance(config=c, user_ns=ipy_namespace)
+        instance.initialize(argv=[])
+
         try:
-            ipy_namespace = {
-                "sa": sa,
-                "config": config,
-                "session": session,
-                **MODELS,
-            }
-            start_ipython(argv=[], user_ns=ipy_namespace)
-
-            session.commit()
-        except Exception as se:
-            session.rollback()
-            raise se
+            await to_thread.run_sync(instance.start)
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
         finally:
-            session.close()
-
-    config.sqlalchemy.sync_cleanup()
+            await session.aclose()
+            await config.sqlalchemy.async_cleanup()
 
 
 cli_patterns: list[Callable] = [py_shell]

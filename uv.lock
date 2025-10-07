@@ -53,11 +53,25 @@ wheels = [
 ]
 
 [[package]]
+name = "asyncer"
+version = "0.0.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/51/c7/64a9fa7c2e6740eeb142686c61c009c0820dc03a6526a18f53fc11645d83/asyncer-0.0.9.tar.gz", hash = "sha256:9d1d5d688dbf7b3aec182bbf7d4b24ed2f242c727fefab44197c1862a2bb8601", size = 18632, upload-time = "2025-10-01T12:32:26.787Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/06/751c1104cf03d4cea639214e0ccaffae7bcc02b250c1fffd211920510dd8/asyncer-0.0.9-py3-none-any.whl", hash = "sha256:f445b04d85a5c37e7165f6f85493badd11a23c25eacd9d2d28a58cf2172520e4", size = 9500, upload-time = "2025-10-01T12:32:25.62Z" },
+]
+
+[[package]]
 name = "autoinstall-manager"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "alembic", extra = ["tz"] },
+    { name = "anyio" },
+    { name = "asyncer" },
     { name = "fastapi" },
     { name = "greenlet" },
     { name = "httpx" },
@@ -81,6 +95,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", extras = ["tz"], specifier = ">=1.16.5" },
+    { name = "anyio", specifier = ">=4.11.0" },
+    { name = "asyncer", specifier = ">=0.0.9" },
     { name = "fastapi", specifier = ">=0.117.1" },
     { name = "greenlet", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.28.1" },
