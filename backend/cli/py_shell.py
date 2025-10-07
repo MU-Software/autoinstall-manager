@@ -4,6 +4,7 @@ from functools import partial
 from os import getenv
 
 import sqlalchemy as sa
+import sqlmodel
 from anyio import to_thread
 from asyncer import syncify
 from IPython.terminal.ipapp import TerminalIPythonApp
@@ -20,6 +21,8 @@ async def py_shell() -> None:  # type: ignore[misc]
         ipy_namespace = {
             # SQLAlchemy
             "sa": sa,
+            # SQLModel
+            "sqlmodel": sqlmodel,
             # Datetime utilities
             "datetime": datetime,
             "date": date,
